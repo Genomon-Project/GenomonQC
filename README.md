@@ -1,5 +1,6 @@
-# Bamstat
-Create BAM summary , using PCAP bam_stats, samtools.
+# GenomonSummary
+
+script for calculating summary
 
 ## Dependency
 
