@@ -4,7 +4,7 @@ script for calculating summary
 
 ## Dependency
 
- - Python (>= 2.7), pysam, xlrd, xlwt, ANNOVAR
+ - Python (>= 2.7), pysam, pynum, xlrd, xlwt
  - samtools
  - PCAP-core
 
@@ -42,4 +42,17 @@ $ qsub ./bamstats.sh ${input bam file 5}.bam ${output txt file 5}.txt
  |- bamstats.sh         # run script
  |- [DIR] python        # python scripts
  |- [DIR] log           # log files
+ ~
+ 
+ {output dir}
+ |- {output txt file}.txt         # above your write
+ |- {output txt file}.txt.1       # temporary file
+ |- {output txt file}.txt.2       # temporary file
+ |- {output txt file}.txt.3       # temporary file
+ |- {output txt file}.txt.4       # temporary file
+ |                                # {output txt file}.txt to create, concatenates temporary file 1 ~ 4.
+ |
+ |- {output txt file}.tsv         # ★result file with tab separation
+ |- {output txt file}.xls         # ★result file (EXCEL)
+ 
 ```

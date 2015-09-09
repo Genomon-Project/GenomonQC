@@ -81,27 +81,29 @@ if __name__ == "__main__":
         line = line.replace( "\n", "" )
         line_split = line.split( "\t" )
 
+        # No.1 bamstat
         if line_split[ 0 ] == 'bam_filename':
             f_type = 'bam_stat'
             tsv_header += line_split
             bam_stats_header = line_split
 
-        elif f_type == 'bam_stat' and line_split[ 0 ] != 'Average:':
+        elif f_type == 'bam_stat' and line_split[ 0 ] != 'LIBRARY':
             if tsv_values == []:
                 tsv_values += line_split
                 id = len( line_split )
 
             bam_stats.append( line_split )
 
-        elif line_split[ 0 ] == 'Average:':
-            f_type = 'depth'
-            tsv_header.append( 'average_depth' )
-            tsv_values.append( line_split[ 1 ] )
+        # No.3 grep -A1 LIBRARY
+        elif line_split[ 0 ] == 'LIBRARY':
+            f_type = 'metrics'
+            tsv_header += line_split
 
-        elif line_split[ 0 ] == 'Stdev:':
-            tsv_header.append( 'depth_stdev' )
-            tsv_values.append( line_split[ 1 ] )
-
+        elif f_type == 'metrics':
+            tsv_values +=line_split
+            f_type = ''
+            
+        # No.4 samtools flagstat
         elif line_split[ 0 ] == 'samtools_flagstat':
             f_type = 'flagstat'
 
@@ -153,19 +155,12 @@ if __name__ == "__main__":
                     tsv_header.append( 'flagstat_{type}_ratio'.format( type = type_string ) )
                     tsv_values.append( match_ratio.group( 1 ) )
 
+        # No.5 coverage.py
         elif line_split[ 0 ] == 'non-N_total_depth':
             f_type = 'coverage_data'
             tsv_header += line_split
                     
         elif f_type == 'coverage_data':
-                tsv_values +=line_split
-                f_type = ''
-
-        elif line_split[ 0 ] == 'LIBRARY':
-            f_type = 'metrics'
-            tsv_header += line_split
-
-        elif f_type == 'metrics':
             tsv_values +=line_split
             f_type = ''
             
