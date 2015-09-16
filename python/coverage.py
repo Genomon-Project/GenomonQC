@@ -12,7 +12,6 @@ from datetime import datetime
 import argparse
 import subprocess
 import multiprocessing
-import time
 import numpy
 
 from bedparse import BedExtract
@@ -38,28 +37,30 @@ def PrintHeader( myself, arg ):
     print '# coverage_depth:\t{0} '.format( arg.coverage_depth )
     print '# process:\t{0} '.format( arg.process )
 
-def mpileup_worker(
-        samtools,
-        bam,
-        bed,
-        mpileup_file
-        ):
+def depth_b_worker( samtools, bam, bed, output_file ):
 
-    samtools_mpileup_cmd = '{samtools} depth -b {bed} {bam} > {mpileup}'.format(
-                                samtools = samtools,
-                                bam = bam,
-                                bed = bed,
-                                mpileup = mpileup_file )
+    samtools_cmd = '{samtools} depth -b {bed} {bam} > {out}'.format(samtools = samtools, bed = bed, bam = bam, out = output_file )
                   
-    process = subprocess.Popen( samtools_mpileup_cmd,
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+    process = subprocess.Popen( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
                                 
     std_out, std_err = process.communicate()
     p_return_code = process.returncode
             
+def depth_r_worker( samtools, bam, bed, output_file ):
+    f = open(bed, 'r')
+    
+    if os.path.exists(output_file):
+        os.remove(output_file)
+        
+    for line in f:
+        data = line.split( "\t" )
+        samtools_cmd = '{samtools} depth -r {c}:{s}-{e} {bam} >> {out}'.format(
+                        samtools = samtools, c = data[0], s = data[1], e = data[2].rstrip("\r\n"), bam = bam, 
+                        out = output_file )
+        ret = subprocess.check_call( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    f.close()
 
+ 
 #
 # Main
 #
@@ -75,7 +76,7 @@ def main():
     parser.add_argument( '-i', '--input_bam', help = "Input BAM file", type = str )
     parser.add_argument( '-t', '--coverage_tmp', help = "Temporary output file", type = str, default = './tmp.txt' )
     parser.add_argument( '-e', '--genome_bed', help = "Genome bed file", type = str, default = None)
-    parser.add_argument( '-b', '--bin_size', help = "Input BAM file", type = int, default = 1000 )
+    parser.add_argument( '-b', '--bin_size', help = "Length of samples to pick", type = int, default = 1000 )
     parser.add_argument( '-n', '--sample_num', help = "Number of samples to pick", type = int, default = 1000 )
     parser.add_argument( '-s', '--samtools', help = "Path to samtools", type = str, default = '/home/w3varann/tools/samtools-1.2/samtools' )
     parser.add_argument( '-c', '--coverage_depth', help = "List of coverage depth", type = str, default = '2,10,20,30,40,50,100' )
@@ -105,15 +106,8 @@ def main():
         # Make index file if not exist
         #
         if not os.path.exists( arg.input_bam + '.bai' ):
-            samtools_index_cmd = '{samtools} index {bam}'.format( 
-                                    samtools = arg.samtools,
-                                    bam = arg.input_bam,
-                                    )
-            process = subprocess.Popen( samtools_index_cmd,
-                              shell=True,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE
-                              )
+            samtools_cmd = '{samtools} index {bam}'.format( samtools = arg.samtools, bam = arg.input_bam )
+            process = subprocess.Popen( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
             std_out, std_err = process.communicate()
             p_return_code = process.returncode
 
@@ -121,31 +115,24 @@ def main():
         # Run samtools mpileup
         #
         jobs = []
-        if arg.sample_num == 1:
+        if arg.process == 1:
             # create random sampling bed
             random_bed = arg.coverage_tmp + "0" + ".bed"
             gen_bed.save_random_bed( random_bed, arg.sample_num)
 
-            mpileup_file = arg.coverage_tmp + '0'
+            depth_file = arg.coverage_tmp + '0'
 
-            mpileup_worker( arg.samtools,
-                            arg.input_bam,
-                            random_bed,
-                            mpileup_file )
+            depth_r_worker( arg.samtools,  arg.input_bam, random_bed, depth_file )
         else:
             for i in range( 0, arg.process ):
                 # create random sampling bed
                 random_bed = arg.coverage_tmp + str( i ) + ".bed"
                 gen_bed.save_random_bed( random_bed, arg.sample_num)
-                mpileup_file = arg.coverage_tmp + str( i )
+                depth_file = arg.coverage_tmp + str( i )
 
                 process = multiprocessing.Process(
-                            target = mpileup_worker,
-                            args=(
-                                arg.samtools,
-                                arg.input_bam,
-                                random_bed,
-                                mpileup_file )
+                        target = depth_r_worker,
+                        args = ( arg.samtools, arg.input_bam, random_bed, depth_file )
                         )
                 process.start()
                 jobs.append( process )
@@ -163,10 +150,10 @@ def main():
         depth = []
 
         for i in range( 0, arg.process ):
-            mpileup_file = arg.coverage_tmp + str( i )
+            depth_file = arg.coverage_tmp + str( i )
             random_bed = arg.coverage_tmp + str( i ) + ".bed"
 
-            f = open( mpileup_file )
+            f = open( depth_file )
             for line in f:
                 line_list = line.split( "\t" )
                 total_cov += 1
@@ -180,7 +167,7 @@ def main():
                         else:
                             coverage[ num ] = 1
 
-            os.remove( mpileup_file )
+            os.remove( depth_file )
             os.remove( random_bed )
             f.close()
 
@@ -197,6 +184,11 @@ def main():
         print data_string
 
         data_string = "{0}\t{1}\t{2}\t{3}".format( sum, total_cov, ave, std )
+        
+        if len(coverage) == 0:
+            print "no coverage data."
+            return 0
+
         for cov_tmp in arg.coverage_depth.split( ',' ):
             if cov_tmp in coverage:
                 data_string += "\t{num}\t{ratio}".format(
@@ -207,7 +199,7 @@ def main():
 
         print data_string
 
-    except Exception as e:
+    except Exception:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print( "Unexpected error: {error}".format( error = sys.exc_info()[0] ) )
