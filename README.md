@@ -4,26 +4,48 @@ script for calculating summary
 
 ## Dependency
 
- - Python (>= 2.7), pysam, pynum, xlrd, xlwt
+ - Python (>= 2.7), pysam, numpy, xlrd, xlwt
  - samtools
+ - bedtools
  - PCAP-core
 
 ## Install & Run
 
-Dounload all files in this repository
+Download all files in this repository
 
 ```
 $ git clone https://github.com/aokad/bamstats.git
 $ cd bamstat
 ```
 
+Download and setting
+
+```
+$ mkdir data
+$ cd data
+$ wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/gap.txt.gz
+$ gunzip gap.txt.gz
+```
+
+Write setting, your environment
+
+```
+$ cd ..
+$ vi bamstats.sh
+sureselect={your bed file path}
+```
+
 Run.
 
 ```
-$ ./bamstats.sh ${input bam file}.bam ${output txt file}.txt
+# exome
+$ ./bamstats.sh ${input bam file} ${output txt file} exome
+
+# wgs
+$ ./bamstats.sh ${input bam file} ${output txt file} wgs
 ```
 
-Run multi files(use qsub).
+Run multi files (use qsub).
 
 ```
 $ qsub ./bamstats.sh ${input bam file 1}.bam ${output txt file 1}.txt
@@ -56,3 +78,4 @@ $ qsub ./bamstats.sh ${input bam file 5}.bam ${output txt file 5}.txt
  |- {output txt file}.xls         # ★result file (EXCEL)
  
 ```
+

@@ -14,8 +14,6 @@ import subprocess
 import multiprocessing
 import numpy
 
-from bedparse import BedExtract
-
 #
 # Subroutines
 #
@@ -31,8 +29,6 @@ def PrintHeader( myself, arg ):
     print '# input_bam:\t{0} '.format( arg.input_bam )
     print '# coverage_tmp:\t{0} '.format( arg.coverage_tmp )
     print '# genome_bed:\t{0} '.format( arg.genome_bed )
-    print '# bin_size:\t{0} '.format( arg.bin_size )
-    print '# sample_num:\t{0} '.format( arg.sample_num )
     print '# samtools:\t{0} '.format( arg.samtools )
     print '# coverage_depth:\t{0} '.format( arg.coverage_depth )
     print '# process:\t{0} '.format( arg.process )
@@ -40,11 +36,9 @@ def PrintHeader( myself, arg ):
 def depth_b_worker( samtools, bam, bed, output_file ):
 
     samtools_cmd = '{samtools} depth -b {bed} {bam} > {out}'.format(samtools = samtools, bed = bed, bam = bam, out = output_file )
-                  
-    process = subprocess.Popen( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-                                
-    std_out, std_err = process.communicate()
-    p_return_code = process.returncode
+    ret = subprocess.call( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    if ret != 0:
+        raise
             
 def depth_r_worker( samtools, bam, bed, output_file ):
     f = open(bed, 'r')
@@ -58,6 +52,8 @@ def depth_r_worker( samtools, bam, bed, output_file ):
                         samtools = samtools, c = data[0], s = data[1], e = data[2].rstrip("\r\n"), bam = bam, 
                         out = output_file )
         ret = subprocess.check_call( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        if ret != 0:
+            raise
     f.close()
 
  
@@ -76,21 +72,16 @@ def main():
     parser.add_argument( '-i', '--input_bam', help = "Input BAM file", type = str )
     parser.add_argument( '-t', '--coverage_tmp', help = "Temporary output file", type = str, default = './tmp.txt' )
     parser.add_argument( '-e', '--genome_bed', help = "Genome bed file", type = str, default = None)
-    parser.add_argument( '-b', '--bin_size', help = "Length of samples to pick", type = int, default = 1000 )
-    parser.add_argument( '-n', '--sample_num', help = "Number of samples to pick", type = int, default = 1000 )
     parser.add_argument( '-s', '--samtools', help = "Path to samtools", type = str, default = '/home/w3varann/tools/samtools-1.2/samtools' )
     parser.add_argument( '-c', '--coverage_depth', help = "List of coverage depth", type = str, default = '2,10,20,30,40,50,100' )
-    parser.add_argument( '-p', '--process', help = "Number of processes to run ", type = int,  default = 10 )
+    parser.add_argument( '-p', '--process', help = "Number of processes to run", type = int,  default = 1 )
+    parser.add_argument( '-m', '--mode', help = "Set r or b. For samtools depth option, -r or -b.", type = str )
 
     arg = parser.parse_args()
     if not arg.input_bam:
         print parser.print_help();
         sys.exit( 1 )
-
-    if arg.genome_bed == None:
-        print "Not yet support to WGS... :("
-        sys.exit(1)
-        
+       
     #
     # Print header
     #
@@ -98,42 +89,35 @@ def main():
 
     try:
         #
-        # Parse genomesize file
-        #
-        gen_bed = BedExtract( arg.genome_bed, arg.bin_size )
-
-        #
         # Make index file if not exist
         #
         if not os.path.exists( arg.input_bam + '.bai' ):
             samtools_cmd = '{samtools} index {bam}'.format( samtools = arg.samtools, bam = arg.input_bam )
-            process = subprocess.Popen( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-            std_out, std_err = process.communicate()
-            p_return_code = process.returncode
+            ret = subprocess.check_call( samtools_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+            if ret != 0:
+                raise
 
         #
         # Run samtools mpileup
         #
         jobs = []
         if arg.process == 1:
-            # create random sampling bed
-            random_bed = arg.coverage_tmp + "0" + ".bed"
-            gen_bed.save_random_bed( random_bed, arg.sample_num)
 
             depth_file = arg.coverage_tmp + '0'
+            if arg.mode == "r":
+                depth_r_worker( arg.samtools,  arg.input_bam, arg.genome_bed, depth_file )
+            elif arg.mode == "b":
+                depth_b_worker( arg.samtools,  arg.input_bam, arg.genome_bed, depth_file )
 
-            depth_r_worker( arg.samtools,  arg.input_bam, random_bed, depth_file )
         else:
             for i in range( 0, arg.process ):
-                # create random sampling bed
-                random_bed = arg.coverage_tmp + str( i ) + ".bed"
-                gen_bed.save_random_bed( random_bed, arg.sample_num)
                 depth_file = arg.coverage_tmp + str( i )
 
-                process = multiprocessing.Process(
-                        target = depth_r_worker,
-                        args = ( arg.samtools, arg.input_bam, random_bed, depth_file )
-                        )
+                if arg.mode == "r":
+                    process = multiprocessing.Process(target = depth_r_worker, args = ( arg.samtools, arg.input_bam, arg.genome_bed, depth_file ))
+                elif arg.mode == "b":
+                    process = multiprocessing.Process(target = depth_b_worker, args = ( arg.samtools, arg.input_bam, arg.genome_bed, depth_file ))
+
                 process.start()
                 jobs.append( process )
 
@@ -151,7 +135,6 @@ def main():
 
         for i in range( 0, arg.process ):
             depth_file = arg.coverage_tmp + str( i )
-            random_bed = arg.coverage_tmp + str( i ) + ".bed"
 
             f = open( depth_file )
             for line in f:
@@ -168,7 +151,6 @@ def main():
                             coverage[ num ] = 1
 
             os.remove( depth_file )
-            os.remove( random_bed )
             f.close()
 
         ave = numpy.average(depth)
