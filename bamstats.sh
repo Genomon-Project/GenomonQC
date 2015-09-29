@@ -10,6 +10,14 @@ BAM=${1}
 OUT=${2}
 data_type=${3}    # "wgs" or "exome"
 
+if [ ! -e log ]; then
+    mkdir log
+fi
+
+output_dir=${OUT%/*}
+if [ ! -e ${output_dir} ]; then
+    mkdir ${output_dir}
+fi
 
 ##### configure
 # PCAP
