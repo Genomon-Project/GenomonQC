@@ -9,9 +9,6 @@ import argparse
 import os
 import math
 
-#import sys
-#sys.argv=[".", "-i", "C:/cygwin64/home/okada/install/bedtools2-master/genomes/human.hg19.genome", "-o", "./test.bed", "-w", "1000000"]
-
 #
 # Main
 #
