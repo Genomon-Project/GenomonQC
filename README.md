@@ -1,81 +1,35 @@
-# GenomonSummary
-
-script for calculating summary
+# GenomonPipeline
+Genomon pipeline in 2015
 
 ## Dependency
 
- - Python (>= 2.7), pysam, numpy, xlrd, xlwt
- - samtools
- - bedtools
- - PCAP-core
 
-## Install & Run
-
-Download all files in this repository
+## Install
 
 ```
-$ git clone https://github.com/aokad/bamstats.git
-$ cd bamstat
+git clone https://github.com/Genomon-Project/Genomon.git
+cd Genomon
+python setup.py build
+python setup.py install --user
+pip install xlrd --user
 ```
 
-Download and setting
-
+## Run
+Disease sample vs. Control sample Comparison
 ```
-$ mkdir data
-$ cd data
-$ wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/gap.txt.gz
-$ gunzip gap.txt.gz
+genomon_summary [-h] {dna,rna} sample_conf.txt project_root_dir genomon_conf_file task_conf_file
 ```
 
-Write setting, your environment
+For DNA sample
 
+example.
 ```
-$ cd ..
-$ vi bamstats.sh
-sureselect={your bed file path}
-```
-
-Run.
-
-```
-# exome
-$ ./bamstats.sh ${input bam file} ${output txt file} exome
-
-# wgs
-$ ./bamstats.sh ${input bam file} ${output txt file} wgs
+genomon_summary dna ./sample_conf.txt ~/tmp ./genomon.cfg ./dna_task_param.cfg
 ```
 
-Run multi files (use qsub).
+For RNA sample
 
+example.
 ```
-$ qsub ./bamstats.sh ${input bam file 1}.bam ${output txt file 1}.txt
-$ qsub ./bamstats.sh ${input bam file 2}.bam ${output txt file 2}.txt
-$ qsub ./bamstats.sh ${input bam file 3}.bam ${output txt file 3}.txt
-$ qsub ./bamstats.sh ${input bam file 4}.bam ${output txt file 4}.txt
-$ qsub ./bamstats.sh ${input bam file 5}.bam ${output txt file 5}.txt
+genomon_summary rna ./sample_conf.txt ~/tmp ./genomon.cfg ./rna_task_param.cfg
 ```
-
-
-## Directory
-
-```
-{repository root}
- |- README.md           # this file
- |- bamstats.sh         # run script
- |- [DIR] python        # python scripts
- |- [DIR] log           # log files
- ~
- 
- {output dir}
- |- {output txt file}.txt         # above your write
- |- {output txt file}.txt.1       # temporary file
- |- {output txt file}.txt.2       # temporary file
- |- {output txt file}.txt.3       # temporary file
- |- {output txt file}.txt.4       # temporary file
- |                                # {output txt file}.txt to create, concatenates temporary file 1 ~ 4.
- |
- |- {output txt file}.tsv         # ★result file with tab separation
- |- {output txt file}.xls         # ★result file (EXCEL)
- 
-```
-
