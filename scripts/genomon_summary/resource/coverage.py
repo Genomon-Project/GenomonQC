@@ -91,7 +91,6 @@ mv {output}.tmp {output}
     def __init__(self, qsub_option, script_dir):
         super(Res_Coverage, self).__init__(qsub_option, script_dir)
 
-
     # 
     # create -incl BED, for bedtools shuffle
     #
@@ -155,36 +154,28 @@ mv {output}.tmp {output}
         depth=numpy.loadtxt(depth_file, dtype=int, usecols=[2])
         ave = numpy.average(depth)
         std = numpy.std(depth)
-        total_cov = len(depth)
-        sum = numpy.sum(depth)
+        all_count = len(depth)
+        all_sum = numpy.sum(depth)
     
         coverage = {}
-        for num in coverage_depth.split( ',' ):
-            if numpy.any(depth > num):
-                coverage[num] = len(depth[(depth > num)])
+        for num in coverage_depth.split(','):
+            if numpy.any(depth > int(num)):
+                count = len(depth[(depth >= int(num))])
+                ratio = float(count)/float(all_count)
+                coverage[num] = [count, ratio]
             else:
-                coverage[num] = 0
+                coverage[num] = [0, 0]
 
         #
         # Output result
         #
         header_string =  "non-N_total_depth\tnon-N_bases\taverage_depth\tdepth_stdev"
-        for num in coverage_depth.split( ',' ):
-            header_string += "\t{0}x\t{0}x_ratio".format( num )
-
-        data_string = "{0}\t{1}\t{2}\t{3}".format( sum, total_cov, ave, std )
-
-        if len(coverage) == 0:
-            data_string = "no coverage data."
-
-        else:
-            for cov_tmp in coverage_depth.split( ',' ):
-                if cov_tmp in coverage:
-                    data_string += "\t{num}\t{ratio}".format(
-                                num = coverage[ cov_tmp ],
-                                ratio = float( coverage[ cov_tmp ] )/ float( total_cov ) if coverage[ cov_tmp ] > 0 else 0 )
-                else:
-                    data_string += "\t0\t0"
+        data_string = "{0}\t{1}\t{2}\t{3}".format(all_sum, all_count, ave, std)
+        
+        for num in coverage_depth.split(','):
+            header_string += "\t{0}x\t{0}x_ratio".format(num)
+            data_string += "\t{num}\t{ratio}".format(
+                num = coverage[num][0], ratio = coverage[num][1])
 
         f = open(output, "w")
         f.write(header_string)

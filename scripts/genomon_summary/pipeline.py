@@ -6,15 +6,11 @@ from genomon_summary.config.genomon_conf import *
 from genomon_summary.config.task_conf import *
 from genomon_summary.config.sample_conf import *
 from genomon_summary.resource.bam_stats import *
-from genomon_summary.resource.a1_library import *
-from genomon_summary.resource.flagstat import *
 from genomon_summary.resource.coverage import *
 from genomon_summary.resource.merge import *
 
 # set task classes
 r_bamstats = Res_Bamstats(task_conf.get("bam_stats", "qsub_option"), run_conf.project_root + '/script')
-r_a1library = Res_A1library(task_conf.get("a1_library", "qsub_option"), run_conf.project_root + '/script')
-r_flagstat = Res_Flagstat(task_conf.get("flagstat", "qsub_option"), run_conf.project_root + '/script')
 r_coverage = Res_Coverage(task_conf.get("coverage", "qsub_option"), run_conf.project_root + '/script')
 r_merge = Res_Merge(task_conf.get("merge", "qsub_option"), run_conf.project_root + '/script')
 
@@ -35,12 +31,11 @@ for sample in sample_conf.bam_import:
 def link_import_bam(output_file):
 
     link_dir = os.path.dirname(output_file)
-    if os.path.isdir(link_dir): os.mkdir(link_dir)
+    if not os.path.isdir(link_dir): os.mkdir(link_dir)
         
     sample, ext = os.path.splitext(os.path.basename(output_file))
     bam = sample_conf.bam_import[sample]
     if os.path.exists(output_file): os.remove(output_file)
-    
     os.symlink(bam, output_file)
         
     bam_prefix, ext = os.path.splitext(bam)   
@@ -49,12 +44,6 @@ def link_import_bam(output_file):
         os.symlink(bam +'.bai', output_file +'.bai')
     elif (os.path.exists(bam_prefix +'.bai')):
         os.symlink(bam_prefix +'.bai', output_file +'.bai')
-    
-    if os.path.exists(output_file +'.metrics'): os.remove(output_file +'.metrics')
-    if (os.path.exists(bam +'.metrics')):
-        os.symlink(bam +'.metrics', output_file +'.metrics')
-    elif (os.path.exists(bam_prefix +'.metrics')):
-        os.symlink(bam_prefix +'.metrics', output_file +'.metrics')
 
 ###################
 # summary stage
@@ -74,36 +63,6 @@ def bam_stats(input_file, output_file):
                  "log": run_conf.project_root + '/log'}
 
     r_bamstats.task_exec(arguments) 
-
-
-@transform(link_import_bam, formatter("(.bam)$"),
-           "{subpath[0][2]}/summary/{subdir[0][0]}/{basename[0]}.a1library"
-           )
-def a1_library(input_file, output_file):
-   
-    dir_name = os.path.dirname(output_file)
-    if not os.path.exists(dir_name): os.makedirs(dir_name)
-         
-    arguments = {"input": input_file,
-                 "output": output_file,
-                 "log": run_conf.project_root + '/log'}
-
-    r_a1library.task_exec(arguments) 
-
-@transform(link_import_bam, formatter("(.bam)$"),
-           "{subpath[0][2]}/summary/{subdir[0][0]}/{basename[0]}.flagstat"
-           )
-def flagstat(input_file, output_file):
-   
-    dir_name = os.path.dirname(output_file)
-    if not os.path.exists(dir_name): os.makedirs(dir_name)
-         
-    arguments = {"SAMTOOLS": genomon_conf.get("SOFTWARE", "samtools"),
-                 "input": input_file,
-                 "output": output_file,
-                 "log": run_conf.project_root + '/log'}
-
-    r_flagstat.task_exec(arguments) 
 
 @transform(link_import_bam, formatter("(.bam)$"),
            "{subpath[0][2]}/summary/{subdir[0][0]}/{basename[0]}.depth"
@@ -141,29 +100,22 @@ def coverage_calc(input_file, output_file):
     
 ###################
 # merge stage
-@collate([bam_stats, a1_library, flagstat, coverage_calc], formatter(""),
+@collate([bam_stats, coverage_calc], formatter(""),
            "{subpath[0][2]}/summary/{subdir[0][0]}/{basename[0]}.tsv"
            )
 def merge(input_files, output_file):
-    files = []
-    suffix = os.path.splitext(input_files[0])
-    files.append(suffix[0] + ".bamstats")
-    files.append(suffix[0] + ".a1library")
-    files.append(suffix[0] + ".flagstat")
-    files.append(suffix[0] + ".coverage")
 
-    string=""
-    for i in range(0, len(files)):
-        f = open(files[i])
-        string += f.read()
-        f.close()
-        
-    split = os.path.splitext(output_file)
-    excel_file = split[0] + ".xls"
-    f = open(excel_file + ".txt", "w")
-    f.write(string)
-    f.close()
-    r_merge.mkxls(string, excel_file)
+    for f in input_files:
+        if not os.path.exists(f):
+            raise
+
+    input_split = os.path.splitext(input_files[0])
+    output_split = os.path.splitext(output_file)
+    files = []
+    files.append(input_split[0] + ".bamstats")
+    files.append(input_split[0] + ".coverage")
+    excel_file = output_split[0] + ".xls"
+    r_merge.mkxls(files, excel_file)
     r_merge.Excel2TSV(excel_file, output_file)
 
 

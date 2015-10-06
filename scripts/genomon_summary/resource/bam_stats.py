@@ -22,7 +22,8 @@ set -xv
 
 export PERL5LIB={PERL5LIB}
 
-{PCAP}/bin/bam_stats.pl -i {input} -o {output}
+{PCAP}/bin/bam_stats.pl -i {input} -o {output}.tmp
+mv {output}.tmp {output}
 """
 
     def __init__(self, qsub_option, script_dir):
