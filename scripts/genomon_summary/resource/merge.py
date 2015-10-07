@@ -25,9 +25,10 @@ set -xv
 
     def __init__(self, qsub_option, script_dir):
         super(Res_Merge, self).__init__(qsub_option, script_dir)
-
+        
     def mkxls(self, files, excel_file):
-        import xlwt        
+        import xlwt
+        import re
         import numpy
         
         # No.1 bamstat
@@ -76,13 +77,13 @@ set -xv
     
         # write bamstats data, total read group
         num_readgroup = len(bamstats_string)
-        for i in range( 0, len( bamstats_header ) ):
-            ws.write(0, i, bamstats_header[ i ] )
+        for i in range(0, len(bamstats_header)):
+            ws.write(0, i, bamstats_header[i])
     
-            if bamstats_header[ i ] == 'readgroup':
-                ws.write( 1, i, "*" )
+            if bamstats_header[i] == 'readgroup':
+                ws.write(1, i, "*")
     
-            elif bamstats_header[ i ] in [
+            elif bamstats_header[i] in [
                                       '#_mapped_bases',
                                       '#_mapped_bases_r1',
                                       '#_mapped_bases_r2',
@@ -105,7 +106,7 @@ set -xv
                 else:
                     ws.write(1, i, numpy.sum(bamstats_values[:,i-num_index]))
 
-            elif bamstats_header[ i ] in [
+            elif bamstats_header[i] in [
                                       'mean_insert_size',
                                       'insert_size_sd',
                                       'median_insert_size',
@@ -115,20 +116,20 @@ set -xv
                 else:
                     ws.write(1, i, numpy.average(bamstats_values[:,i-num_index]))
 
-            elif bamstats_header[ i ] in [
+            elif bamstats_header[i] in [
                                       'read_length_r1',
                                       'read_length_r2',
                                      ]:
 
-                ws.write( 1, i, int( float( bamstats_string[0][i] ) ) )
+                ws.write(1, i, int(float(bamstats_string[0][i])))
     
             else:
-                ws.write( 1, i, bamstats_string[0][i] )
+                ws.write(1, i, bamstats_string[0][i])
     
         # write bamstats data, each read group
-        for i in range( 0, num_readgroup ):
-            for j in range( 0, len( bamstats_string[ i ] ) ):
-                if bamstats_header[ j ] in [
+        for i in range(0, num_readgroup):
+            for j in range(0, len(bamstats_string[i])):
+                if bamstats_header[j] in [
                                       'read_length_r1',
                                       'read_length_r2',
                                       '#_mapped_bases',
@@ -147,57 +148,40 @@ set -xv
                                       '#_gc_bases_r1',
                                       '#_gc_bases_r2',
                                       '#_duplicate_reads'
-    
                                       ]:
-                    ws.write( i + 2, j, int( bamstats_string[ i ][ j ] ) )
+                    ws.write(i + 2, j, int(bamstats_string[i][j]))
     
-                elif bamstats_header[ j ] in [
+                elif bamstats_header[j] in [
                                       'mean_insert_size',
                                       'insert_size_sd',
                                       'median_insert_size',
                                       ]:
-                    ws.write( i + 2, j, float( bamstats_string[ i ][ j ] ) )
+                    ws.write(i + 2, j, float(bamstats_string[i][j]))
     
                 else:
-                    ws.write( i + 2, j, bamstats_string[ i ][ j ] )
+                    ws.write(i + 2, j, bamstats_string[i][j])
                 
         # write coverage data
-        x_pos = len( bamstats_header )
+        x_pos = len(bamstats_header)
 
-        for i in range( 0, len( coverage_header ) ):
-            ws.write(0, i+x_pos, coverage_header[ i ] )
+        for i in range(0, len(coverage_header)):
+            ws.write(0, i + x_pos, coverage_header[i])
+            search_ratio = re.search("[0-9]{1,10}x_ratio$", coverage_header[i])
+            search_x = re.search("[0-9]{1,10}x$", coverage_header[i])
+
+            if coverage_header[i] in ["non-N_total_depth", "non-N_bases"] \
+                or search_x != None:
+                ws.write(1, i + x_pos, int(float(coverage_values[i])))
     
-            if coverage_header[ i ] in [
-                                      "non-N_total_depth",
-                                      "non-N_bases",
-                                      "2x",
-                                      "10x",
-                                      "20x",
-                                      "30x",
-                                      "40x",
-                                      "50x",
-                                      "100x",
-                                     ]:
-                ws.write( 1, i+x_pos, int( float( coverage_values[ i ] ) ) )
-    
-            elif coverage_header[ i ] in [
-                                      'average_depth',
-                                      'depth_stdev',
-                                      "2x_ratio",
-                                      "10x_ratio",
-                                      "20x_ratio",
-                                      "30x_ratio",
-                                      "40x_ratio",
-                                      "50x_ratio",
-                                      "100x_ratio"
-                                     ]:
-                ws.write( 1, i+x_pos, float( coverage_values[ i ] ) )
+            elif coverage_header[i] in ['average_depth', 'depth_stdev'] \
+                or search_ratio != None:
+                ws.write(1, i + x_pos, float(coverage_values[i]))
     
             else:
-                ws.write( 1, i+x_pos, coverage_values[ i ] )
+                ws.write(1, i + x_pos, coverage_values[i])
         
         # save
-        wb.save( excel_file )
+        wb.save(excel_file)
    
     
     def Excel2TSV(self, ExcelFile, TSVFile):
@@ -209,14 +193,14 @@ set -xv
          for rownum in xrange(worksheet.nrows):
              data_to_write = []
              for x in worksheet.row_values(rownum):
-                 if isinstance( x, basestring ):
-                     x = x.replace( "\t", "")
-                 if type( x ) == type( u'' ):
-                     data_to_write.append( x.encode('utf-8') )
+                 if isinstance(x, basestring):
+                     x = x.replace("\t", "")
+                 if type(x) == type(u''):
+                     data_to_write.append( x.encode('utf-8'))
                  else:
-                     data_to_write.append( str( x ) )
+                     data_to_write.append(str(x))
     
-             tsvfile.write( '\t'.join( data_to_write ) + '\n' )
+             tsvfile.write('\t'.join(data_to_write) + '\n')
     
          tsvfile.close()
     
