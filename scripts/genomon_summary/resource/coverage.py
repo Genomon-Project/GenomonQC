@@ -41,7 +41,7 @@ then
     
     # bedtools shuffle
     input_bed={output}.input_bed
-    {BEDTOOLS} shuffle -i $temp_bed -g $genome_file -incl {incl_bed_file} -excl $gaptxt_cut > $input_bed
+    {BEDTOOLS} shuffle -i $temp_bed -g {genome_file} -incl {incl_bed_file} -excl $gaptxt_cut > $input_bed
 
     # rm $temp_bed {incl_bed_file} $gaptxt_cut
 

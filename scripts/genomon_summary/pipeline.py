@@ -73,6 +73,7 @@ def coverage(input_file, output_file):
     if not os.path.exists(dir_name): os.makedirs(dir_name)
     
     incl_bed_file = ""
+    genome_file = ""
     if run_conf.analysis_type == "wgs":
         genome_file = genomon_conf.get("REFERENCE", "hg19_genome")
         incl_bed_file = output_file + "genome.bed"
@@ -83,6 +84,7 @@ def coverage(input_file, output_file):
                  "i_bed_lines": task_conf.get("coverage", "wgs_i_bed_lines"),
                  "i_bed_size": task_conf.get("coverage", "wgs_i_bed_width"),
                  "incl_bed_file": incl_bed_file,
+                 "genome_file": genome_file,
                  "gaptxt": genomon_conf.get("REFERENCE", "gaptxt"),
                  "sureselect": genomon_conf.get("REFERENCE", "sureselect"),
                  "BEDTOOLS": genomon_conf.get("SOFTWARE", "bedtools"),
