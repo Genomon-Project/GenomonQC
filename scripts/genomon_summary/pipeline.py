@@ -78,7 +78,7 @@ def coverage(input_file, output_file):
         genome_file = genomon_conf.get("REFERENCE", "hg19_genome")
         incl_bed_file = output_file + "genome.bed"
         incl_bed_w = task_conf.get("coverage", "wgs_incl_bed_width")
-        r_coverage.create_incl_bed_wgs(genome_file, incl_bed_file, incl_bed_w, "")
+        r_coverage.create_incl_bed_wgs(genome_file, incl_bed_file, int(incl_bed_w), "")
 
     arguments = {"data_type": run_conf.analysis_type,
                  "i_bed_lines": task_conf.get("coverage", "wgs_i_bed_lines"),

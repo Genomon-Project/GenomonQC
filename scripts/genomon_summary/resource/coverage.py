@@ -77,10 +77,8 @@ else
         rm {output}.tmp
     fi
     cat $input_bed | while read line; do (
-        c=`echo $line | cut -f 1`
-        s=`echo $line | cut -f 2`
-        e=`echo $line | cut -f 3`
-        {SAMTOOLS} depth -r $c:$s-$e {input} >> {output}.tmp
+        set -- $line
+        {SAMTOOLS} depth -r $1:$2-$3 {input} >> {output}.tmp
     ) </dev/null; done
 fi
 
