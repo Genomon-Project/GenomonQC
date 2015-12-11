@@ -51,8 +51,7 @@ def link_import_bam(output_file):
            "{subpath[0][2]}/summary/{subdir[0][0]}/{basename[0]}.bamstats"
            )
 def bam_stats(input_file, output_file):
-    print input_file
-    print output_file
+
     dir_name = os.path.dirname(output_file)
     if not os.path.exists(dir_name): os.makedirs(dir_name)
      
@@ -86,7 +85,7 @@ def coverage(input_file, output_file):
                  "incl_bed_file": incl_bed_file,
                  "genome_file": genome_file,
                  "gaptxt": genomon_conf.get("REFERENCE", "gaptxt"),
-                 "sureselect": genomon_conf.get("REFERENCE", "sureselect"),
+                 "bait_file": genomon_conf.get("REFERENCE", "bait_file"),
                  "BEDTOOLS": genomon_conf.get("SOFTWARE", "bedtools"),
                  "SAMTOOLS": genomon_conf.get("SOFTWARE", "samtools"),
                  "LD_LIBRARY_PATH": genomon_conf.get("ENV", "LD_LIBRARY_PATH"),
