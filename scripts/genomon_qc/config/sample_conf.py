@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import os
-from genomon_summary.config.run_conf import *
+from genomon_qc.config.run_conf import *
 
 class Sample_conf(object):
 

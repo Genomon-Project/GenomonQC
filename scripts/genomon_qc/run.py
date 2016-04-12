@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 
 from ruffus import *
-from genomon_summary.config.genomon_conf import *
-from genomon_summary.config.task_conf import *
-from genomon_summary.config.run_conf import *
-from genomon_summary.config.sample_conf import *
+from genomon_qc.config.genomon_conf import *
+from genomon_qc.config.task_conf import *
+from genomon_qc.config.run_conf import *
+from genomon_qc.config.sample_conf import *
 
 def main(args):
 
@@ -39,7 +39,7 @@ def main(args):
 
     """
     pipeline_printout_graph (
-        open("/home/okada/genomon_summary.svg", "w"),
+        open("/home/okada/genomon_qc.svg", "w"),
         "svg",
         # final targets
         [pipeline.merge],
@@ -50,6 +50,6 @@ def main(args):
         user_colour_scheme = {
             "colour_scheme_index" :0,
         },
-        pipeline_name = "Genomon Summary Schemes"
+        pipeline_name = "Genomon QC Schemes"
      )
     """
