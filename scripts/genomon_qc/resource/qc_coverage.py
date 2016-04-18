@@ -2,9 +2,9 @@
 
 from genomon_qc.stage_task import *
 
-class Res_Coverage(Stage_task):
+class Res_QC_Coverage(Stage_task):
 
-    task_name = "coverage"
+    task_name = "qc_coverage"
 
     script_template = """
 #!/bin/bash
@@ -83,8 +83,9 @@ mv {output}.tmp {output}
 
 """
 
+
     def __init__(self, qsub_option, script_dir):
-        super(Res_Coverage, self).__init__(qsub_option, script_dir)
+        super(Res_QC_Coverage, self).__init__(qsub_option, script_dir)
 
     # 
     # create -incl BED, for bedtools shuffle

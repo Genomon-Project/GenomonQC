@@ -1,14 +1,19 @@
 #! /usr/bin/env python
 
 import os
-from genomon_qc.config.run_conf import *
+from genomon_pipeline.config.run_conf import *
 
 class Sample_conf(object):
 
     def __init__(self):
 
+        self.fastq = {}
+        self.bam_tofastq = {}
         self.bam_import = {}
-
+        self.mutation_call = []
+        self.sv_detection = []
+        self.qc = []
+        self.control_panel = {}
         # 
         # should add the file exist check here ?
         #
@@ -61,10 +66,16 @@ class Sample_conf(object):
             csv_obj = csv.reader(hIN)
             for cells in csv_obj:
                 tempdata = []
+                row_len = 0
                 for cell in cells:
+                    row_len += len(cell)
+                    if (len(cell) == 0) and (row_len > 0):
+                        continue
                     tempdata.append(cell)
-                _file_data.append(tempdata)
-    
+                
+                if row_len > 0:
+                    _file_data.append(tempdata)
+
         return _file_data
 
 
@@ -73,8 +84,17 @@ class Sample_conf(object):
         _file_data = []
         with open(file_path, 'r') as hIN:
             for line in hIN:
-                F = line.rstrip('\n').split('\t')
-                _file_data.append(F)
+                F = line.rstrip().split('\t')
+                tempdata = []
+                row_len = 0
+                for cell in F:
+                    row_len += len(cell)
+                    if (len(cell) == 0) and (row_len > 0):
+                        continue
+                    tempdata.append(cell)
+                
+                if row_len > 0:
+                    _file_data.append(tempdata)
 
         return _file_data
 
@@ -82,24 +102,49 @@ class Sample_conf(object):
     def parse_data(self, _data ):
     
         mode = ''
-        
+       
         sampleID_list = []
+        mut_tumor_sampleID_list = []
+        sv_tumor_sampleID_list = []
+        qc_sampleID_list = []
+        
         for row in _data:
             if row[0].startswith('['):
 
                 # header
-                if row[0].lower() == '[bam_import]':
+                if row[0].lower() == '[fastq]':
+                    mode = 'fastq'
+                    continue
+                elif row[0].lower() == '[bam_tofastq]':
+                    mode = 'bam_tofastq'
+                    continue
+                elif row[0].lower() == '[bam_import]':
                     mode = 'bam_import'
                     continue
-
+                elif row[0].lower() == '[mutation_call]':
+                    mode = 'mutation_call'
+                    continue
+                elif row[0].lower() == '[sv_detection]':
+                    mode = 'sv_detection'
+                    continue
+                elif row[0].lower() == '[qc]':
+                    mode = 'qc'
+                    continue
+                elif row[0].lower() == '[summary]':
+                    mode = 'qc'
+                    continue
+                elif row[0].lower() == '[controlpanel]':
+                    mode = 'controlpanel'
+                    continue
                 else:
-                    err_msg = "Section name should be [bam_import]. " + \
+                    err_msg = "Section name should be either of [fastq], [bam_tofastq], [bam_import], " + \
+                              "[mutation_call], [sv_detection] or [controlpanel]. " + \
                               "Also, sample name should not start with '['."
                     raise ValueError(err_msg)
             
             
             # section data
-            if mode == 'bam_import':
+            if mode == 'fastq':
 
                 sampleID = row[0]
                 # 'None' is presereved for special string
@@ -112,6 +157,64 @@ class Sample_conf(object):
                     raise ValueError(err_msg)
 
                 sampleID_list.append(sampleID)
+
+                if len(row) != 3:
+                    err_msg = sampleID + ": the path for read1 (and read2) should be provided"
+                    raise ValueError(err_msg)
+
+                sequence1 = row[1].split(';')
+                sequence2 = row[2].split(';')
+
+                for seq in sequence1 + sequence2:
+                    if not os.path.exists(seq):
+                        err_msg = sampleID + ": " + seq +  " does not exists" 
+                        raise ValueError(err_msg)
+
+                self.fastq[sampleID] = [sequence1, sequence2]
+
+            elif mode == 'bam_tofastq':
+
+                sampleID = row[0]
+                # 'None' is presereved for special string
+                if sampleID == 'None':
+                    err_msg = "None can not be used as sampleID"
+                    raise ValueError(err_msg)
+
+                if sampleID in sampleID_list:
+                    err_msg = sampleID + " is duplicated."
+                    raise ValueError(err_msg)
+
+                sampleID_list.append(sampleID)
+
+                if len(row) != 2:
+                    err_msg = sampleID + ": only one bam file is allowed"
+                    raise ValueError(err_msg)
+
+                sequences = row[1]
+                for seq in sequences.split(";"):
+                    if not os.path.exists(seq):
+                        err_msg = sampleID + ": " + seq +  " does not exists"
+                        raise ValueError(err_msg)
+
+                self.bam_tofastq[sampleID] = sequences
+                
+            elif mode == 'bam_import':
+
+                sampleID = row[0]
+                # 'None' is presereved for special string
+                if sampleID == 'None':
+                    err_msg = "None can not be used as sampleID"
+                    raise ValueError(err_msg)
+
+                if sampleID in sampleID_list:
+                    err_msg = sampleID + " is duplicated."
+                    raise ValueError(err_msg)
+
+                sampleID_list.append(sampleID)
+
+                if len(row) != 2:
+                    err_msg = sampleID + ": only one bam file is allowed"
+                    raise ValueError(err_msg)
 
                 sequence = row[1]
                 if not os.path.exists(sequence):
@@ -126,36 +229,91 @@ class Sample_conf(object):
                 self.bam_import[sampleID] = sequence
 
 
-    # get the paths where bam files imported from another projects will be located"
-    def get_linked_bam_import_path(self):
-        linked_bam_import_path = []
-        for sample in sample_conf.bam_import:
-            linked_bam_import_path.append(run_conf.project_root + '/bam/' + sample + '/' + sample + '.bam')
-        return linked_bam_import_path
+            elif mode == 'mutation_call':
 
-    def sample2bam(self,sample):
-        bam = ''
-        if (self.bam_import.has_key(sample)):
-            bam = run_conf.project_root + '/bam/' + sample + '/' + sample + '.bam'
-        else:
-            bam = run_conf.project_root + '/bam/' + sample + '/' + sample + '.markdup.bam'
-        return bam 
+                tumorID = row[0]
+                if tumorID not in sampleID_list:
+                    err_msg = "[mutation_call] section, " + tumorID + " is not defined"
+                    raise ValueError(err_msg)
 
-    def get_control_panel_list(self,panel_name):
-        control_panel_bam = []
-        for sample in self.control_panel[panel_name]:
-            control_panel_bam.append(self.sample2bam(sample))
-        return control_panel_bam
+                if tumorID in mut_tumor_sampleID_list:
+                    err_msg = "[mutation_call] section, " + tumorID + " is duplicated"
+                    raise ValueError(err_msg)
 
-    def get_disease_and_control_panel_bam(self):
-        unique_bams = []
-        for complist in sample_conf.compare:
-            panel_name = complist[2]
-            unique_bams.extend(self.get_control_panel_list(panel_name))
-            disease_sample = complist[0]
-            unique_bams.append(run_conf.project_root + '/bam/' + disease_sample + '/' + disease_sample + '.markdup.bam')
-        result_list = list(set(unique_bams))       
-        return result_list
+                normalID = row[1] if len(row) >= 2 and row[1] not in ['', 'None'] else None
+                controlpanelID = row[2] if len(row) >= 3 and row[2] not in ['', 'None'] else None
+
+                if normalID is not None and normalID not in sampleID_list:
+                    err_msg = "[mutation_call] section, " + normalID + " is not defined"
+                    raise ValueError(err_msg)
+
+                mut_tumor_sampleID_list.append(tumorID)
+
+                self.mutation_call.append((tumorID, normalID, controlpanelID))
+
+
+            elif mode == 'sv_detection':
+
+                tumorID = row[0]
+                if tumorID not in sampleID_list:
+                    err_msg = "[sv_detection] section, " + tumorID + " is not defined"
+                    raise ValueError(err_msg)
+
+                if tumorID in sv_tumor_sampleID_list:
+                    err_msg = "[sv_detection] section, " + tumorID + " is duplicated"
+                    raise ValueError(err_msg)
+
+                normalID = row[1] if len(row) >= 2 and row[1] not in ['', 'None'] else None
+                controlpanelID = row[2] if len(row) >= 3 and row[2] not in ['', 'None'] else None
+
+                if normalID is not None and normalID not in sampleID_list:
+                    err_msg = "[sv_detection] section, " + normalID + " is not defined"
+                    raise ValueError(err_msg)
+
+                sv_tumor_sampleID_list.append(tumorID)
+
+                self.sv_detection.append((tumorID, normalID, controlpanelID))
+
+
+            elif mode == 'qc':
+
+                sampleID = row[0]
+                if sampleID not in sampleID_list:
+                    err_msg = "[qc] section, " + sampleID + " is not defined"
+                    raise ValueError(err_msg)
+
+                if sampleID in qc_sampleID_list:
+                    err_msg = "[qc] section, " + sampleID + " is duplicated"
+                    raise ValueError(err_msg)
+
+                qc_sampleID_list.append(sampleID)
+
+                self.qc.append(sampleID)
+
+
+            elif mode == 'controlpanel':
+
+                if len(row) <= 1:
+                    err_msg = "[controlpanel] section, list item is none for the row: " + ','.join(row)
+                    raise ValueError(err_msg)
+
+                controlpanelID = row[0]
+
+                for sample in row[1:]:
+                    if sample not in sampleID_list:
+                        err_msg = "[controlpanel] section, " + sample + " is not defined in " + \
+                                    "controlpanelID: " + controlpanelID
+                        raise ValueError(err_msg)
+ 
+                self.control_panel[controlpanelID] = row[1:]
+
+
+        # check whether controlpanleID in compare section is defined
+        # for comp in self.compare:
+        #     if comp[2] is not None and comp[2] not in self.controlpanel:
+        #         err_msg = "[compare] section, controlpanelID: " + comp[2] + " is not defined"
+        #         raiseValueError(err_msg)
+
 
 global sample_conf 
 sample_conf = Sample_conf()

@@ -2,9 +2,9 @@
 
 from genomon_qc.stage_task import *
 
-class Res_Bamstats(Stage_task):
+class Res_QC_Bamstats(Stage_task):
 
-    task_name = "bam_stats"
+    task_name = "qc_bamstats"
 
     script_template = """
 #!/bin/bash
@@ -27,4 +27,4 @@ mv {output}.tmp {output}
 """
 
     def __init__(self, qsub_option, script_dir):
-        super(Res_Bamstats, self).__init__(qsub_option, script_dir)
+        super(Res_QC_Bamstats, self).__init__(qsub_option, script_dir)

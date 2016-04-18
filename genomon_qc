@@ -1,0 +1,25 @@
+#! /usr/bin/env python
+
+import argparse
+from pkg_resources import get_distribution
+
+version = get_distribution("genomon_qc").version
+
+parser = argparse.ArgumentParser(prog = "genomon_qc")
+
+parser.add_argument("--version", action = "version", version = "genomon_qc-" + version)
+parser.add_argument('analysis_type', choices=['wgs', 'exome'], help = "analysis type")
+parser.add_argument("sample_conf_file", help = "input sample list flie [csv/tsv/xlsx]", type = str)
+parser.add_argument("project_root", metavar = "project_root_dir", help = "output root directory", type = str)
+parser.add_argument("genomon_conf_file", help = "config file for genomon pipeline", type = str)
+parser.add_argument("--multiprocess", help = "use ruffus multiprocess", default='100', type=int)
+parser.add_argument("--verbose", help = "write messages to STDERR", default='3', type=int)
+
+args = parser.parse_args()
+
+import os
+args.project_root = os.path.abspath(args.project_root)
+
+from genomon_qc.run import *
+
+main(args)

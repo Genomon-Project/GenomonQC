@@ -3,16 +3,15 @@ import os
 from ruffus import *
 from genomon_qc.config.run_conf import *
 from genomon_qc.config.genomon_conf import *
-from genomon_qc.config.task_conf import *
 from genomon_qc.config.sample_conf import *
 from genomon_qc.resource.qc_bamstats import *
 from genomon_qc.resource.qc_coverage import *
 from genomon_qc.resource.qc_merge import *
 
 # set task classes
-r_qc_bamstats = Res_QC_Bamstats(task_conf.get("qc_bamstats", "qsub_option"), run_conf.project_root + '/script')
-r_qc_coverage = Res_QC_Coverage(task_conf.get("qc_coverage", "qsub_option"), run_conf.project_root + '/script')
-r_qc_merge = Res_QC_Merge(task_conf.get("qc_merge", "qsub_option"), run_conf.project_root + '/script')
+r_qc_bamstats = Res_QC_Bamstats(genomon_conf.get("qc_bamstats", "qsub_option"), run_conf.project_root + '/script')
+r_qc_coverage = Res_QC_Coverage(genomon_conf.get("qc_coverage", "qsub_option"), run_conf.project_root + '/script')
+r_qc_merge = Res_QC_Merge(genomon_conf.get("qc_merge", "qsub_option"), run_conf.project_root + '/script')
 
 # prepare output directories
 if not os.path.isdir(run_conf.project_root): os.mkdir(run_conf.project_root)
@@ -47,6 +46,7 @@ def link_import_bam(output_file):
 
 ###################
 # qc stage
+@follows( link_import_bam )
 @transform(link_import_bam, formatter("(.bam)$"),
            "{subpath[0][2]}/qc/{subdir[0][0]}/{basename[0]}.bamstats"
            )
@@ -61,27 +61,30 @@ def bam_stats(input_file, output_file):
                  "output": output_file,
                  "log": run_conf.project_root + '/log'}
 
-    r_bamstats.task_exec(arguments) 
+    r_qc_bamstats.task_exec(arguments) 
 
+@follows( link_import_bam )
 @transform(link_import_bam, formatter("(.bam)$"),
-           "{subpath[0][2]}/qc/{subdir[0][0]}/{basename[0]}.depth"
+           "{subpath[0][2]}/qc/{subdir[0][0]}/{basename[0]}.coverage"
            )
 def coverage(input_file, output_file):
    
     dir_name = os.path.dirname(output_file)
     if not os.path.exists(dir_name): os.makedirs(dir_name)
+    sample_name = os.path.basename(dir_name)
+    depth_output_file = dir_name+'/'+sample_name+'.depth'
     
     incl_bed_file = ""
     genome_file = ""
     if run_conf.analysis_type == "wgs":
         genome_file = genomon_conf.get("REFERENCE", "hg19_genome")
         incl_bed_file = output_file + "genome.bed"
-        incl_bed_w = task_conf.get("qc_coverage", "wgs_incl_bed_width")
+        incl_bed_w = genomon_conf.get("qc_coverage", "wgs_incl_bed_width")
         r_qc_coverage.create_incl_bed_wgs(genome_file, incl_bed_file, int(incl_bed_w), "")
 
     arguments = {"data_type": run_conf.analysis_type,
-                 "i_bed_lines": task_conf.get("qc_coverage", "wgs_i_bed_lines"),
-                 "i_bed_size": task_conf.get("qc_coverage", "wgs_i_bed_width"),
+                 "i_bed_lines": genomon_conf.get("qc_coverage", "wgs_i_bed_lines"),
+                 "i_bed_size": genomon_conf.get("qc_coverage", "wgs_i_bed_width"),
                  "incl_bed_file": incl_bed_file,
                  "genome_file": genome_file,
                  "gaptxt": genomon_conf.get("REFERENCE", "gaptxt"),
@@ -90,7 +93,7 @@ def coverage(input_file, output_file):
                  "SAMTOOLS": genomon_conf.get("SOFTWARE", "samtools"),
                  "LD_LIBRARY_PATH": genomon_conf.get("ENV", "LD_LIBRARY_PATH"),
                  "input": input_file,
-                 "output": output_file,
+                 "output": depth_output_file,
                  "log": run_conf.project_root + '/log'}
 
     r_qc_coverage.task_exec(arguments)
@@ -101,22 +104,13 @@ def coverage(input_file, output_file):
    
 ###################
 # merge stage
-@collate([bam_stats, coverage_calc], formatter(""),
-           "{subpath[0][2]}/qc/{subdir[0][0]}/{basename[0]}.genomonQC.result.filt.txt"
-           )
+
+@follows( bam_stats )
+@follows( coverage )
+
+@collate([bam_stats, coverage], formatter(""),
+           "{subpath[0][2]}/qc/{subdir[0][0]}/{basename[0]}.genomonQC.result.filt.txt")
 def merge_qc(input_files, output_file):
 
-    for f in input_files:
-        if not os.path.exists(f):
-            raise
-
-    input_split = os.path.splitext(input_files[0])
-    output_split = os.path.splitext(output_file)
-    files = []
-    files.append(input_split[0] + ".bamstats")
-    files.append(input_split[0] + ".coverage")
-    excel_file = output_split[0] + ".xls"
-    r_qc_merge.mkxls(input_files, excel_file, genomon_conf.get_meta_info(["genomon_pipeline", "PCAP", "samtools", "bedtools"]))
-    r_qc_merge.Excel2TSV(excel_file, output_file)
-
+    r_qc_merge.write_qc(input_files, output_file, get_meta_info(["genomon_qc"]))
 
