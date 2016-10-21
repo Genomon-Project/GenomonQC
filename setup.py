@@ -1,33 +1,23 @@
-#!/usr/bin/env python
-# 
-# $Id: setup.cfg 134 2016-03-30 09:28:00Z aokada $
-# 
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+"""
+Created on Thu Oct 20 17:59:54 2016
 
-version = '1.1.0'
+@author: okada
+"""
+
+from setuptools import setup
+from scripts.genomon_qc import __version__
 
 setup(name='genomon_qc',
-      version=version,
-      description="parser result files created by genomon",
-      long_description="""\n
-Genomon Quality Control""",
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='genomon quality-control',
-      author='aokada',
-      author_email='genomon_team@gamil.com',
-      url='https://github.com/Genomon-Project/GenomonQC.git',
-      license='GPL-3',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      version=__version__,
+      description="Python tools for bam's Quality Control.",
+      author='ai okada',
+      author_email='genomon.devel@gmail.com',
+      url='https://github.com/Genomon-Project/GenomonQC',
+      package_dir = {'': 'scripts'},
+      packages=['genomon_qc'],
       scripts=['genomon_qc'],
-      data_files=[('config', ['genomon.cfg'])],
-      include_package_data=True,
-      zip_safe=False,
-      install_requires=[
-          # -*- Extra requirements: -*-
-      ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      license='License of GenomonPipeline'
       )
-
