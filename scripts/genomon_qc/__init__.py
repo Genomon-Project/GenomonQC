@@ -1,1 +1,1 @@
-__version__ = 'genomon_qc-2.0.0'
+__version__ = '2.0.0'

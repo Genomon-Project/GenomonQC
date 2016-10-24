@@ -47,19 +47,30 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
             end += width
 
     f.close()
+
+#
+# create -i BED, for bedtools shuffle
+#
+def create_i_bed_wgs(output_bed, line_num, width):
+    f = open(output_bed, "w")
+    for i in range(line_num):
+        f.write("1\t0\t%d\n" % (width))
+
+    f.close()
     
 #
 # Calculate coverage
 #
-def calc_coverage(depth_file, coverage_depth, output):
+def calc_coverage(depth_file, bed_file, coverage_depth, output):
+    import os
     import pandas
     import math
 
-    if not os.path.exists(depth_file + ".input_bed"):
-        print "Not exist file, " + depth_file + ".input_bed"
+    if not os.path.exists(bed_file):
+        print "Not exist file, " + bed_file
         return
         
-    bed = pandas.read_csv(depth_file + ".input_bed", header = None, sep='\t', usecols = [1,2])
+    bed = pandas.read_csv(bed_file, header = None, sep='\t', usecols = [1,2])
     all_count = sum(bed[2] - bed[1])
 
     # depth average & coverage
@@ -143,17 +154,10 @@ set -eu
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
 # for hg19, create gap text (bedtools shuffle -excl option file)
-cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.gap.txt
-
-# create temp bed (bedtools shuffle -i option file)
-echo '' > {output}.shuffle.bed
-for J in `seq 1 {i_bed_lines}`
-do
-    printf "1\t0\t%s\n" {i_bed_width} >> {output}.shuffle.bed
-done
+cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed
 
 # bedtools shuffle
-{BEDTOOLS} shuffle -i {output}.shuffle.bed -g {genome_size_file} -incl {incl_bed_file} -excl {output}.gap.txt > {output}.target.bed
+{BEDTOOLS} shuffle -i {i_bed_file} -g {genome_size_file} -incl {incl_bed_file} -excl {output}.shuffle_excl.bed > {output}.target.bed
 
 # depth
 if [ -e {output}.tmp ]; then
@@ -172,32 +176,33 @@ cat {output}.target.bed | while read line; do (
 
 mv {output}.tmp {output}
 """
-
-    create_incl_bed_wgs(args.genome_size_file, args.output_prefix + '.incl.bed', args.incl_bed_width, "")
-
+    output_prefix = os.path.dirname(args.output_file)
+    create_incl_bed_wgs(args.genome_size_file, output_prefix + '/depth.shuffle_incl.bed', args.incl_bed_width, "")
+    create_i_bed_wgs(output_prefix + '/depth.shuffle_i.bed', args.i_bed_lines, args.i_bed_width)
     cmd = cmd_template.format(input = args.input_file,
-                            output = args.output_prefix + '.depth',
+                            output = output_prefix + '/depth',
                             gaptxt = args.gaptxt,
-                            i_bed_lines = args.i_bed_lines,
-                            i_bed_width = args.i_bed_width,
+                            #i_bed_lines = args.i_bed_lines,
+                            #i_bed_width = args.i_bed_width,
                             genome_size_file = args.genome_size_file,
-                            incl_bed_file = args.output_prefix + '.incl.bed',
+                            incl_bed_file = output_prefix + '/depth.shuffle_incl.bed',
+                            i_bed_file = output_prefix + '/depth.shuffle_i.bed',
                             LD_LIBRARY_PATH = args.ld_library_path,
                             BEDTOOLS = args.bedtools,
                             SAMTOOLS = args.samtools,
                             samtools_params = args.samtools_params)
 
     subprocess.check_call(cmd, shell=True)
-    calc_coverage(args.output_prefix + '.depth', args.coverage_text, args.output_prefix + '.coverage')
+    calc_coverage(output_prefix + '/depth', output_prefix + '/depth.target.bed', args.coverage_text, args.output_file)
 
     if args.del_tempfile == True:
-        os.unlink(args.output_prefix + '.shuffle.bed')
-        os.unlink(args.output_prefix + '.incl.bed')
-        os.unlink(args.output_prefix + '.gap.txt')
-        os.unlink(args.output_prefix + '.target.bed')
-        os.unlink(args.output_prefix + '.tmp.bam')
-        os.unlink(args.output_prefix + '.tmp.bam.bai')
-        os.unlink(args.output_prefix + '.depth')
+        os.unlink(output_prefix + '/depth.shuffle_i.bed')
+        os.unlink(output_prefix + '/depth.shuffle_incl.bed')
+        os.unlink(output_prefix + '/depth.shuffle_excl.txt')
+        os.unlink(output_prefix + '/depth.target.bed')
+        os.unlink(output_prefix + '/depth.tmp.bam')
+        os.unlink(output_prefix + '/depth.tmp.bam.bai')
+        os.unlink(output_prefix + '/depth')
         
 
 # 
@@ -238,8 +243,9 @@ export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 mv {output}.tmp {output}
 """
     
+    output_prefix = os.path.dirname(args.output_file)
     cmd = cmd_template.format(input = args.input_file,
-                            output = args.output_prefix + '.depth',
+                            output = output_prefix + '/depth',
                             bait_file = args.bait_file,
                             LD_LIBRARY_PATH = args.ld_library_path,
                             BEDTOOLS = args.bedtools,
@@ -248,14 +254,14 @@ mv {output}.tmp {output}
                             )
 
     subprocess.check_call(cmd, shell=True)
-    calc_coverage(args.output_prefix + '.depth', args.coverage_text, args.output_prefix + '.coverage')
+    calc_coverage(output_prefix + '/depth', output_prefix + '/depth.target.bed', args.coverage_text, args.output_file)
     
     if args.del_tempfile == True:
-        os.unlink(args.output_prefix + '.target.bed')
-        os.unlink(args.output_prefix + '.noheader.bed')
-        os.unlink(args.output_prefix + '.sort.bed')
-        os.unlink(args.output_prefix + '.merge.bed')
-        os.unlink(args.output_prefix + '.depth')
+        os.unlink(output_prefix + '/depth.target.bed')
+        os.unlink(output_prefix + '/depth.noheader.bed')
+        os.unlink(output_prefix + '/depth.sort.bed')
+        os.unlink(output_prefix + '/depth.merge.bed')
+        os.unlink(output_prefix + '/depth')
 
 
 if __name__ == "__main__":

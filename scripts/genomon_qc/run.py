@@ -54,7 +54,7 @@ def config_get(arg, arg_name, config, section, item, default, type):
         if config.has_option(section, item) == False:
             raise InputError ("[InputError] Config file does not have this option. [%s] %s" % (section, item))
         
-        if type == type(0):
+        if type == 'int':
             value = config.getint(section, item)
         else:
             value = config.get(section, item)
@@ -69,21 +69,21 @@ def wgs_main(args):
     
     path_check(args.input_file, "input_file")
     
-    output_dir = os.path.dirname(args.output_prefix)
-    if os.path.exsists(output_dir) == False:
+    output_dir = os.path.dirname(args.output_file)
+    if os.path.exists(output_dir) == False:
         os.mkdir(output_dir)
     
     config = load_config(args.config_file)
     args.genome_size_file = config_get(args.genome_size_file, "--genome_size_file", config, "REFERENCE", "hg19_genome", "", "path")
     args.gaptxt           = config_get(args.gaptxt, "--gaptxt", config, "REFERENCE", "gaptxt", "", "path")
-    args.incl_bed_width   = config_get(args.incl_bed_width, "--incl_bed_width", config, "qc_coverage", "wgs_incl_bed_width", -1, type(0))
-    args.i_bed_lines      = config_get(args.i_bed_lines, "--i_bed_lines", config, "qc_coverage", "wgs_i_bed_lines", -1, type(0))
-    args.i_bed_width      = config_get(args.i_bed_width, "--i_bed_width", config, "qc_coverage", "wgs_i_bed_width", -1, type(0))
-    args.ld_library_path  = config_get(args.ld_library_path, "--ld_library_path", config, "ENV", "LD_LIBRARY_PATH", "", "path")
+    args.incl_bed_width   = config_get(args.incl_bed_width, "--incl_bed_width", config, "qc_coverage", "wgs_incl_bed_width", -1, "int")
+    args.i_bed_lines      = config_get(args.i_bed_lines, "--i_bed_lines", config, "qc_coverage", "wgs_i_bed_lines", -1, "int")
+    args.i_bed_width      = config_get(args.i_bed_width, "--i_bed_width", config, "qc_coverage", "wgs_i_bed_width", -1, "int")
+    args.ld_library_path  = config_get(args.ld_library_path, "--ld_library_path", config, "ENV", "LD_LIBRARY_PATH", "", "str")
     args.bedtools         = config_get(args.bedtools, "--bedtools", config, "SOFTWARE", "bedtools", "", "path")
     args.samtools         = config_get(args.samtools, "--samtools", config, "SOFTWARE", "samtools", "", "path")
-    args.samtools_params  = config_get(args.samtools_params, "--samtools_params", config, "qc_coverage", "samtools_params", "", "path")
-    args.coverage_text    = config_get(args.coverage_text, "--coverage_text", config, "qc_coverage", "coverage", "", type(""))
+    args.samtools_params  = config_get(args.samtools_params, "--samtools_params", config, "qc_coverage", "samtools_params", "", "str")
+    args.coverage_text    = config_get(args.coverage_text, "--coverage_text", config, "qc_coverage", "coverage", "", "str")
     
     coverage.run_wgs(args)
 
@@ -92,17 +92,17 @@ def exome_main(args):
     
     path_check(args.input_file, "input_file")
     
-    output_dir = os.path.dirname(args.output_prefix)
-    if os.path.exsists(output_dir) == False:
+    output_dir = os.path.dirname(args.output_file)
+    if os.path.exists(output_dir) == False:
         os.mkdir(output_dir)
     
     config = load_config(args.config_file)
     args.bait_file        = config_get(args.bait_file, "--bait_file", config, "REFERENCE", "bait_file", "", "path")
-    args.ld_library_path  = config_get(args.ld_library_path, "--ld_library_path", config, "ENV", "LD_LIBRARY_PATH", "", "path")
+    args.ld_library_path  = config_get(args.ld_library_path, "--ld_library_path", config, "ENV", "LD_LIBRARY_PATH", "", "str")
     args.bedtools         = config_get(args.bedtools, "--bedtools", config, "SOFTWARE", "bedtools", "", "path")
     args.samtools         = config_get(args.samtools, "--samtools", config, "SOFTWARE", "samtools", "", "path")
-    args.samtools_params  = config_get(args.samtools_params, "--samtools_params", config, "qc_coverage", "samtools_params", "", "path")
-    args.coverage_text    = config_get(args.coverage_text, "--coverage_text", config, "qc_coverage", "coverage", "", type(""))
+    args.samtools_params  = config_get(args.samtools_params, "--samtools_params", config, "qc_coverage", "samtools_params", "", "str")
+    args.coverage_text    = config_get(args.coverage_text, "--coverage_text", config, "qc_coverage", "coverage", "", "str")
     
     coverage.run_exome(args)
     
@@ -112,11 +112,11 @@ def bamstats_main(args):
     path_check(args.input_file, "input_file")
     
     output_dir = os.path.dirname(args.output_file)
-    if os.path.exsists(output_dir) == False:
+    if os.path.exists(output_dir) == False:
         os.mkdir(output_dir)
         
     config = load_config(args.config_file)
-    args.perl5lib = config_get(args.perl5lib, "--perl5lib", config, "ENV", "PERL5LIB", "", "path")
+    args.perl5lib = config_get(args.perl5lib, "--perl5lib", config, "ENV", "PERL5LIB", "", "str")
     args.bamstats = config_get(args.bamstats, "--bamstats", config, "SOFTWARE", "bamstats", "", "path")
     
     bamstats.run(args)
@@ -127,8 +127,9 @@ def merge_main(args):
     path_check(args.coverage_file, "coverage_file")
     path_check(args.bamstats_file, "bamstats_file")
     
-    if os.path.dirname(args.output_file) == False:
-        os.mkdir(os.path.dirname(args.output_file))
-        
+    output_dir = os.path.dirname(args.output_file)
+    if os.path.exists(output_dir) == False:
+        os.mkdir(output_dir)
+    
     merge.run(args.bamstats_file, args.coverage_file, args.output_file, args.meta)
     

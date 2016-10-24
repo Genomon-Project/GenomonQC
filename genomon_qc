@@ -12,16 +12,17 @@ def main():
     from genomon_qc import __version__
     import genomon_qc.run
 
-    parser = argparse.ArgumentParser(prog = "genomon_qc")
-    parser.add_argument("--version", action = "version", version = __version__)
+    prog = "genomon_qc"
+    parser = argparse.ArgumentParser(prog = prog)
+    parser.add_argument("--version", action = "version", version = prog + "-" + __version__)
     subparsers = parser.add_subparsers()
 
     
     ##########
     # wgs 
     wgs_parser = subparsers.add_parser("wgs", help = "calc coverage for wgs.")
-    wgs_parser.add_argument("input_file", help = "input bam's path", type = str)
-    wgs_parser.add_argument("output_prefix", help = "output file", type = str)
+    wgs_parser.add_argument("input_file", help = "path ti input bam", type = str)
+    wgs_parser.add_argument("output_file", help = "path to output file", type = str)
     wgs_parser.add_argument("--genome_size_file", help = "path to the bedtools-2.24.0/genomes/human.hg19.genome", type = str, default = "")
     wgs_parser.add_argument("--gaptxt", help = "path to the gat.txt", type = str, default = "")
     wgs_parser.add_argument("--incl_bed_width", help = "bps for normalize incl_bed (bedtools chuffle -incl)", type = int, default = -1)
@@ -32,40 +33,40 @@ def main():
     wgs_parser.add_argument("--samtools", help = "path to installed SAMTOOLS", type = str, default = "")
     wgs_parser.add_argument("--samtools_params", help = "SAMTOOL's parameters", type = str, default = "")
     wgs_parser.add_argument("--coverage_text", help = "coverage_depth text separated with comma", type = str, default = "")
+    wgs_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
     wgs_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", type = bool, default = True)
-    wgs_parser.add_argument("--config_file", help = "meta data", type = str, default = "")
     wgs_parser.set_defaults(func = genomon_qc.run.wgs_main)
     ##########
     # exome 
     exome_parser = subparsers.add_parser("exome", help = "calc coverage for exome.")
-    exome_parser.add_argument("input_file", help = "input bam's path", type = str)
-    exome_parser.add_argument("output_prefix", help = "output file", type = str)
+    exome_parser.add_argument("input_file", help = "path to input bam", type = str)
+    exome_parser.add_argument("output_file", help = "path to output file", type = str)
     exome_parser.add_argument("--bait_file", help = "path to the bait_file", type = str, default = "")
     exome_parser.add_argument("--ld_library_path", help = "LD_LIBRARY_PATH", type = str, default = "")
     exome_parser.add_argument("--bedtools", help = "path to installed BEDTOOLS", type = str, default = "")
     exome_parser.add_argument("--samtools", help = "path to installed SAMTOOLS", type = str, default = "")
     exome_parser.add_argument("--samtools_params", help = "SAMTOOL's parameters", type = str, default = "")
     exome_parser.add_argument("--coverage_text", help = "coverage_depth text separated with comma", type = str, default = "")
+    exome_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
     exome_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", type = bool, default = True)
-    exome_parser.add_argument("--config_file", help = "meta data", type = str, default = "")
     exome_parser.set_defaults(func = genomon_qc.run.exome_main)
     ##########
     # bamstat 
     bamstats_parser = subparsers.add_parser("bamstats", help = "bamstat.")
-    bamstats_parser.add_argument("input_file", help = "input bam's path", type = str)
-    bamstats_parser.add_argument("output_file", help = "output file's path", type = str)
+    bamstats_parser.add_argument("input_file", help = "path to input bam", type = str)
+    bamstats_parser.add_argument("output_file", help = "path to output file", type = str)
     bamstats_parser.add_argument("--perl5lib", help = "PERL5LIB", type = str, default = "")
     bamstats_parser.add_argument("--bamstats", help = "installed file path of bamstats", type = str, default = "")
-    bamstats_parser.add_argument("--config_file", help = "meta data", type = str, default = "")
+    bamstats_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
     bamstats_parser.set_defaults(func = genomon_qc.run.bamstats_main)
     ##########
     # merge 
     merge_parser = subparsers.add_parser("merge", help = "merge coverage and bamstat.")
-    merge_parser.add_argument("coverage_file", help = "input file's path, created by wgs or exome.", type = str)
-    merge_parser.add_argument("bamstats_file", help = "input file's path, created by bamstats.", type = str)
-    merge_parser.add_argument("output_file", help = "output file path", type = str)
+    merge_parser.add_argument("coverage_file", help = "path to coverage result file, created by wgs or exome.", type = str)
+    merge_parser.add_argument("bamstats_file", help = "path to bamstats result file, created by bamstats.", type = str)
+    merge_parser.add_argument("output_file", help = "path to output file", type = str)
+    merge_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
     merge_parser.add_argument("--meta", help = "meta data", type = str, default = "")
-    merge_parser.add_argument("--config_file", help = "meta data", type = str, default = "")
     merge_parser.set_defaults(func = genomon_qc.run.merge_main)
     ##########
     
