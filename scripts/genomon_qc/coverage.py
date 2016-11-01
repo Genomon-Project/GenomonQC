@@ -136,6 +136,7 @@ def calc_coverage(depth_file, bed_file, coverage_depth, output):
 #
 def run_wgs(args):
     
+    import os
     import subprocess
     
     cmd_template = """
@@ -198,7 +199,7 @@ mv {output}.tmp {output}
     if args.del_tempfile == True:
         os.unlink(output_prefix + '/depth.shuffle_i.bed')
         os.unlink(output_prefix + '/depth.shuffle_incl.bed')
-        os.unlink(output_prefix + '/depth.shuffle_excl.txt')
+        os.unlink(output_prefix + '/depth.shuffle_excl.bed')
         os.unlink(output_prefix + '/depth.target.bed')
         os.unlink(output_prefix + '/depth.tmp.bam')
         os.unlink(output_prefix + '/depth.tmp.bam.bai')
