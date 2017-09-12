@@ -20,10 +20,12 @@ pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
 set -xv
+set -eu
+set -o pipefail
 
 export PERL5LIB={PERL5LIB}
 
-{bamstats} -i {input} -o {output}.tmp || exit $?
+{bamstats} -i {input} -o {output}.tmp
 mv {output}.tmp {output}
 """
 

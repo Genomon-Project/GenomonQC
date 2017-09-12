@@ -151,14 +151,15 @@ hostname                # print hostname
 date                    # print date
 set -xv
 set -eu
+set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
 # for hg19, create gap text (bedtools shuffle -excl option file)
-cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed || exit $?
+cut -f 2,3,4 {gaptxt} && cut -c 4- > {output}.shuffle_excl.bed
 
 # bedtools shuffle
-{BEDTOOLS} shuffle -i {i_bed_file} -g {genome_size_file} -incl {incl_bed_file} -excl {output}.shuffle_excl.bed > {output}.target.bed || exit $?
+{BEDTOOLS} shuffle -i {i_bed_file} -g {genome_size_file} -incl {incl_bed_file} -excl {output}.shuffle_excl.bed > {output}.target.bed
 
 # depth
 if [ -e {output}.tmp ]; then
@@ -169,9 +170,9 @@ cat {output}.target.bed | while read line; do (
     set -- $line || exit $?
     let start=$2+1 || exit $?
     
-    {SAMTOOLS} view {samtools_params} -b -h {input} $1:$start-$3 > {output}.tmp.bam || exit $?
+    {SAMTOOLS} view {samtools_params} -b -h {input} $1:$start-$3 > {output}.tmp.bam
     {SAMTOOLS} index {output}.tmp.bam || exit $?
-    {SAMTOOLS} depth -r $1:$start-$3 {output}.tmp.bam >> {output}.tmp || exit $?
+    {SAMTOOLS} depth -r $1:$start-$3 {output}.tmp.bam >> {output}.tmp
 
 ) </dev/null; done
 
@@ -226,20 +227,21 @@ hostname                # print hostname
 date                    # print date
 set -xv
 set -eu
+set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
     # merge bed (bedtools shuffle -incl option file)
-    total_l=`cat {bait_file} | wc -l` || exit $?
-    header_l=`grep ^@ {bait_file} | wc -l` || exit $?
-    data_l=`expr $total_l - $header_l` || exit $?
-    tail -$data_l {bait_file} > {output}.noheader.bed || exit $?
-    {BEDTOOLS} sort -i {output}.noheader.bed > {output}.sort.bed || exit $?
-    {BEDTOOLS} merge -i {output}.sort.bed > {output}.merge.bed || exit $?
-    cut -c 4- {output}.merge.bed > {output}.target.bed || exit $?
+    total_l=`cat {bait_file} | wc -l`
+    header_l=`grep ^@ {bait_file} | wc -l`
+    data_l=`expr $total_l - $header_l`
+    tail -$data_l {bait_file} > {output}.noheader.bed
+    {BEDTOOLS} sort -i {output}.noheader.bed > {output}.sort.bed
+    {BEDTOOLS} merge -i {output}.sort.bed > {output}.merge.bed
+    cut -c 4- {output}.merge.bed > {output}.target.bed
 
     # depth
-    {SAMTOOLS} view {samtools_params} -b -h {input} | {SAMTOOLS} depth -b {output}.target.bed - > {output}.tmp || exit $?
+    {SAMTOOLS} view {samtools_params} -b -h {input} | {SAMTOOLS} depth -b {output}.target.bed - > {output}.tmp
 
 mv {output}.tmp {output}
 """
