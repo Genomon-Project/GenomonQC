@@ -150,7 +150,7 @@ pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
 set -xv
-set -eu
+set -u
 set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
@@ -226,7 +226,7 @@ pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
 set -xv
-set -eu
+set -u
 set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
