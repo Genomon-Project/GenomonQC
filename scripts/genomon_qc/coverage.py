@@ -151,7 +151,7 @@ hostname                # print hostname
 date                    # print date
 set -xv
 set -u
-set -o pipefail
+#set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
@@ -227,7 +227,7 @@ hostname                # print hostname
 date                    # print date
 set -xv
 set -u
-set -o pipefail
+#set -o pipefail
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 

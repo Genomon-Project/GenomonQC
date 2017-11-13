@@ -21,7 +21,7 @@ hostname                # print hostname
 date                    # print date
 set -xv
 set -eu
-set -o pipefail
+#set -o pipefail
 
 export PERL5LIB={PERL5LIB}
 
