@@ -149,7 +149,7 @@ def run_wgs(args):
 pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
-set -xv
+#set -xv
 set -u
 #set -o pipefail
 
@@ -225,7 +225,7 @@ def run_exome(args):
 pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
-set -xv
+#set -xv
 set -u
 #set -o pipefail
 

@@ -19,7 +19,7 @@ def run(args):
 pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
-set -xv
+#set -xv
 set -eu
 #set -o pipefail
 
