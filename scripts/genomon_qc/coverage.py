@@ -156,7 +156,7 @@ set -u
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
 # for hg19, create gap text (bedtools shuffle -excl option file)
-cut -f 2,3,4 {gaptxt} && cut -c 4- > {output}.shuffle_excl.bed
+cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed
 
 # bedtools shuffle
 {BEDTOOLS} shuffle -i {i_bed_file} -g {genome_size_file} -incl {incl_bed_file} -excl {output}.shuffle_excl.bed > {output}.target.bed
