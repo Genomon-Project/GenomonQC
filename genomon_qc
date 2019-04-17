@@ -56,6 +56,7 @@ def main():
     bamstats_parser.add_argument("input_file", help = "path to input bam", type = str)
     bamstats_parser.add_argument("output_file", help = "path to output file", type = str)
     bamstats_parser.add_argument("--perl5lib", help = "PERL5LIB", type = str, default = "")
+    bamstats_parser.add_argument("--perl", help = "directory path to bin/perl", type = str, default = "")
     bamstats_parser.add_argument("--bamstats", help = "installed file path of bamstats", type = str, default = "")
     bamstats_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
     bamstats_parser.set_defaults(func = genomon_qc.run.bamstats_main)

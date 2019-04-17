@@ -23,13 +23,21 @@ date                    # print date
 set -eu
 #set -o pipefail
 
-export PERL5LIB={PERL5LIB}
+{PERL5LIB}
+{PERL}
 
 {bamstats} -i {input} -o {output}.tmp
 mv {output}.tmp {output}
 """
+    perl5lib = ""
+    if args.perl5lib != "":
+        perl5lib = "export PERL5LIB=%s" % (args.perl5lib)
+    perl = ""
+    if args.perl != "":
+        perl = "export PATH=%s:$PATH" % (args.perl)
 
-    cmd = cmd_template.format(PERL5LIB = args.perl5lib,
+    cmd = cmd_template.format(PERL5LIB = perl5lib,
+                            PERL = perl,
                             bamstats = args.bamstats,
                             input = args.input_file,
                             output = args.output_file)

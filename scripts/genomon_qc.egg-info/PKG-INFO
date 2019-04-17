@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: genomon-qc
+Version: 2.0.4release
+Summary: Python tools for bam's Quality Control.
+Home-page: https://github.com/Genomon-Project/GenomonQC
+Author: ai okada
+Author-email: genomon.devel@gmail.com
+License: License of GenomonPipeline
+Description: UNKNOWN
+Platform: UNKNOWN

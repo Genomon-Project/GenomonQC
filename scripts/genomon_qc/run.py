@@ -43,21 +43,23 @@ def path_check(path, arg_name):
     if os.path.exists(path) == False:
         raise InputError ("[InputError] File is not exist. %s (%s)" % (path, arg_name))
 
-def config_get(arg, arg_name, config, section, item, default, type):
+def config_get(arg, arg_name, config, section, item, default, type, required = False):
     
     value = arg
     
     if arg == default:
         if config == None:
-            raise InputError ("[InputError] Command option '%s' is unspecified, specify this, or use '--config_file' option. [%s] %s" % (arg_name, section, item))
-            
-        if config.has_option(section, item) == False:
-            raise InputError ("[InputError] Config file does not have this option. [%s] %s" % (section, item))
-        
-        if type == 'int':
-            value = config.getint(section, item)
+            if required:
+                raise InputError ("[InputError] Command option '%s' is unspecified, specify this, or use '--config_file' option. [%s] %s" % (arg_name, section, item))
         else:
-            value = config.get(section, item)
+            if config.has_option(section, item) == False:
+                if required:
+                    raise InputError ("[InputError] Config file does not have this option. [%s] %s" % (section, item))
+            else:        
+                if type == 'int':
+                    value = config.getint(section, item)
+                else:
+                    value = config.get(section, item)
 
     if type == 'path':
         path_check(value, arg_name)
@@ -116,7 +118,8 @@ def bamstats_main(args):
         os.mkdir(output_dir)
         
     config = load_config(args.config_file)
-    args.perl5lib = config_get(args.perl5lib, "--perl5lib", config, "ENV", "PERL5LIB", "", "str")
+    args.perl5lib = config_get(args.perl5lib, "--perl5lib", config, "ENV", "PERL5LIB", "", "str", False)
+    args.perl = config_get(args.perl, "--perl", config, "ENV", "PERL", "", "str", False)
     args.bamstats = config_get(args.bamstats, "--bamstats", config, "SOFTWARE", "bamstats", "", "path")
     
     bamstats.run(args)
