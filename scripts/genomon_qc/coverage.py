@@ -149,9 +149,8 @@ def run_wgs(args):
 pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
-#set -xv
-set -u
-#set -o pipefail
+set -xv
+set -eu
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
@@ -163,15 +162,15 @@ cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed
 
 # depth
 if [ -e {output}.tmp ]; then
-    rm {output}.tmp || exit $?
+    rm {output}.tmp
 fi
 
 cat {output}.target.bed | while read line; do (
-    set -- $line || exit $?
-    let start=$2+1 || exit $?
+    set -- $line
+    let start=$2+1
     
     {SAMTOOLS} view {samtools_params} -b -h {input} $1:$start-$3 > {output}.tmp.bam
-    {SAMTOOLS} index {output}.tmp.bam || exit $?
+    {SAMTOOLS} index {output}.tmp.bam
     {SAMTOOLS} depth -r $1:$start-$3 {output}.tmp.bam >> {output}.tmp
 
 ) </dev/null; done
@@ -225,9 +224,8 @@ def run_exome(args):
 pwd                     # print current working directory
 hostname                # print hostname
 date                    # print date
-#set -xv
-set -u
-#set -o pipefail
+set -xv
+set -eu
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
