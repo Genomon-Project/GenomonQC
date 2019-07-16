@@ -9,11 +9,12 @@ Created on Thu Oct 20 13:59:56 2016
 # create -incl BED, for bedtools shuffle
 #
 def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
+    import sys
     import os
     import math
    
     if not os.path.exists(input_genome):
-        print "Not exist file, " + input_genome
+        print ("Not exist file, " + input_genome)
         return
 
     # read genome file to dict.
@@ -25,7 +26,10 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
         chrom = cells[0].lower().replace("chr", "")
     
         if chrom.isdigit() == True or chrom == "x" or chrom == "y":
-            genomes[chrom] = long(cells[1])
+            if sys.version_info.major == 2:
+                genomes[chrom] = long(cells[1])
+            else:
+                genomes[chrom] = int(cells[1])
     
     # write BED file
     f = open(output_bed, "w") 
@@ -35,7 +39,11 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
         start = 0
         end = width
 
-        line_num = long(math.ceil(float(size)/float(width)))
+        if sys.version_info.major == 2:
+            line_num = long(math.ceil(float(size)/float(width)))
+        else:
+            line_num = int(math.ceil(float(size)/float(width)))
+            
         for j in range(line_num):
             if end > size:
                 end = size
@@ -67,7 +75,7 @@ def calc_coverage(depth_file, bed_file, coverage_depth, output):
     import math
 
     if not os.path.exists(bed_file):
-        print "Not exist file, " + bed_file
+        print ("Not exist file, " + bed_file)
         return
         
     bed = pandas.read_csv(bed_file, header = None, sep='\t', usecols = [1,2])

@@ -1,9 +1,11 @@
+![Python](https://img.shields.io/badge/python-2.7%20%7C%203.5%20%7C%203.6%20%7C%203.7-blue.svg)
+
 # GenomonQC
 Genomon Quality Control in 2015
 
 ## Dependency
 
- - python (2.7.x)
+ - python (2.7 | 3.5 | 3.6 | 3.7)
  - samtools (1.2)
  - bedtools (2.24.0)
  - PCAP (20150511)
