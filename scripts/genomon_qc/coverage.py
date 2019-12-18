@@ -175,7 +175,7 @@ fi
 
 cat {output}.target.bed | while read line; do (
     set -- $line
-    let start=$2+1
+    ((start=$2+1))
     
     {SAMTOOLS} view {samtools_params} -b -h {input} $1:$start-$3 > {output}.tmp.bam
     {SAMTOOLS} index {output}.tmp.bam
