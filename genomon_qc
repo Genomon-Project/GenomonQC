@@ -35,7 +35,7 @@ def main():
     wgs_parser.add_argument("--samtools_params", help = "SAMTOOL's parameters", type = str, default = "")
     wgs_parser.add_argument("--coverage_text", help = "coverage_depth text separated with comma", type = str, default = "")
     wgs_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
-    wgs_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", type = bool, default = True)
+    wgs_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", action='store_true')
     wgs_parser.set_defaults(func = genomon_qc.run.wgs_main)
     ##########
     # exome 
@@ -49,7 +49,7 @@ def main():
     exome_parser.add_argument("--samtools_params", help = "SAMTOOL's parameters", type = str, default = "")
     exome_parser.add_argument("--coverage_text", help = "coverage_depth text separated with comma", type = str, default = "")
     exome_parser.add_argument("--config_file", help = "path to config file. use this file insead of specify above parameters.", type = str, default = "")
-    exome_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", type = bool, default = True)
+    exome_parser.add_argument("--del_tempfile", help = "delete flg to temporary file", action='store_true')
     exome_parser.set_defaults(func = genomon_qc.run.exome_main)
     ##########
     # bamstat 
