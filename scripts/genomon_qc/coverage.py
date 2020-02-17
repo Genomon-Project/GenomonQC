@@ -23,12 +23,12 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix, grc_flag):
         cells = line.rstrip().split("\t")
         if len(cells) < 2:
             break
-        chrom_norm = cells[0].lower().replace("chr", "")
+        chrom_norm = cells[0].replace("chr", "")
         chrom = cells[0]
         if grc_flag:
             chrom = chrom_norm
             
-        if chrom_norm.isdigit() == True or chrom_norm in ["x", "y"]:
+        if chrom_norm.isdigit() == True or chrom_norm in ["X", "Y"]:
             if sys.version_info.major == 2:
                 genomes[chrom] = long(cells[1])
             else:
@@ -51,7 +51,8 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix, grc_flag):
             if end > size:
                 end = size
 
-            head = suffix + key.upper()
+            #head = suffix + key.upper()
+            head = suffix + key
 
             f.write("{0}\t{1}\t{2}\n".format(head, start, end))
             start = end
