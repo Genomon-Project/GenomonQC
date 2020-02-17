@@ -81,6 +81,7 @@ def wgs_main(args):
     args.incl_bed_width   = config_get(args.incl_bed_width, "--incl_bed_width", config, "qc_coverage", "wgs_incl_bed_width", -1, "int")
     args.i_bed_lines      = config_get(args.i_bed_lines, "--i_bed_lines", config, "qc_coverage", "wgs_i_bed_lines", -1, "int")
     args.i_bed_width      = config_get(args.i_bed_width, "--i_bed_width", config, "qc_coverage", "wgs_i_bed_width", -1, "int")
+    args.grc_flag         = config_get(args.grc_flag, "--grc_flag", config, "qc_coverage", "wgs_grc_flag", False, "bool")
     args.ld_library_path  = config_get(args.ld_library_path, "--ld_library_path", config, "ENV", "LD_LIBRARY_PATH", "", "str")
     args.bedtools         = config_get(args.bedtools, "--bedtools", config, "SOFTWARE", "bedtools", "", "path")
     args.samtools         = config_get(args.samtools, "--samtools", config, "SOFTWARE", "samtools", "", "path")

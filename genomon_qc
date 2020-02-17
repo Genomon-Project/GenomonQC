@@ -28,6 +28,7 @@ def main():
     wgs_parser.add_argument("--incl_bed_width", help = "bps for normalize incl_bed (bedtools chuffle -incl)", type = int, default = -1)
     wgs_parser.add_argument("--i_bed_lines", help = "line number of target bed file.", type = int, default = -1)
     wgs_parser.add_argument("--i_bed_width", help = "bps par 1 line, number of target bed file.", type = int, default = -1)
+    wgs_parser.add_argument("--grc_flag", help = "set with GRCh reference (no chr)", action='store_true')
     wgs_parser.add_argument("--ld_library_path", help = "LD_LIBRARY_PATH", type = str, default = "")
     wgs_parser.add_argument("--bedtools", help = "path to installed BEDTOOLS", type = str, default = "")
     wgs_parser.add_argument("--samtools", help = "path to installed SAMTOOLS", type = str, default = "")

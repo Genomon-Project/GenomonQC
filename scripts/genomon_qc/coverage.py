@@ -8,7 +8,7 @@ Created on Thu Oct 20 13:59:56 2016
 # 
 # create -incl BED, for bedtools shuffle
 #
-def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
+def create_incl_bed_wgs(input_genome, output_bed, width, suffix, grc_flag):
     import sys
     import os
     import math
@@ -23,9 +23,12 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix):
         cells = line.rstrip().split("\t")
         if len(cells) < 2:
             break
-        chrom = cells[0].lower().replace("chr", "")
-    
-        if chrom.isdigit() == True or chrom == "x" or chrom == "y":
+        chrom_norm = cells[0].lower().replace("chr", "")
+        chrom = cells[0]
+        if grc_flag:
+            chrom = chrom_norm
+            
+        if chrom_norm.isdigit() == True or chrom_norm in ["x", "y"]:
             if sys.version_info.major == 2:
                 genomes[chrom] = long(cells[1])
             else:
@@ -186,7 +189,7 @@ cat {output}.target.bed | while read line; do (
 mv {output}.tmp {output}
 """
     output_prefix = os.path.dirname(args.output_file)
-    create_incl_bed_wgs(args.genome_size_file, output_prefix + '/depth.shuffle_incl.bed', args.incl_bed_width, "")
+    create_incl_bed_wgs(args.genome_size_file, output_prefix + '/depth.shuffle_incl.bed', args.incl_bed_width, "", args.grc_flag)
     create_i_bed_wgs(output_prefix + '/depth.shuffle_i.bed', args.i_bed_lines, args.i_bed_width)
     cmd = cmd_template.format(input = args.input_file,
                             output = output_prefix + '/depth',
