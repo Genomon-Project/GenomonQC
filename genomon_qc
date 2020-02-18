@@ -43,6 +43,7 @@ def main():
     exome_parser.add_argument("input_file", help = "path to input bam", type = str)
     exome_parser.add_argument("output_file", help = "path to output file", type = str)
     exome_parser.add_argument("--bait_file", help = "path to the bait_file", type = str, default = "")
+    exome_parser.add_argument("--grc_flag", help = "set with GRCh reference (no chr)", action='store_true')
     exome_parser.add_argument("--ld_library_path", help = "LD_LIBRARY_PATH", type = str, default = "")
     exome_parser.add_argument("--bedtools", help = "path to installed BEDTOOLS", type = str, default = "")
     exome_parser.add_argument("--samtools", help = "path to installed SAMTOOLS", type = str, default = "")

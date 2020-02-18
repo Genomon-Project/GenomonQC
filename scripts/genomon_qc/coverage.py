@@ -167,7 +167,12 @@ set -eu
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
 # for hg19, create gap text (bedtools shuffle -excl option file)
-cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed
+if [ "{grc_flag}" = "True" ];
+then
+    cut -f 2,3,4 {gaptxt} | cut -c 4- > {output}.shuffle_excl.bed
+else
+    cut -f 2,3,4 {gaptxt} > {output}.shuffle_excl.bed
+fi
 
 # bedtools shuffle
 {BEDTOOLS} shuffle -i {i_bed_file} -g {genome_size_file} -incl {incl_bed_file} -excl {output}.shuffle_excl.bed > {output}.target.bed
@@ -203,6 +208,7 @@ mv {output}.tmp {output}
                             LD_LIBRARY_PATH = args.ld_library_path,
                             BEDTOOLS = args.bedtools,
                             SAMTOOLS = args.samtools,
+                            grc_flag = args.grc_flag,
                             samtools_params = args.samtools_params)
 
     subprocess.check_call(cmd, shell=True)
@@ -241,17 +247,23 @@ set -eu
 
 export LD_LIBRARY_PATH={LD_LIBRARY_PATH}
 
-    # merge bed (bedtools shuffle -incl option file)
-    total_l=`cat {bait_file} | wc -l`
-    header_l=`grep ^@ {bait_file} | wc -l`
-    data_l=`expr $total_l - $header_l`
-    tail -$data_l {bait_file} > {output}.noheader.bed
-    {BEDTOOLS} sort -i {output}.noheader.bed > {output}.sort.bed
-    {BEDTOOLS} merge -i {output}.sort.bed > {output}.merge.bed
-    cut -c 4- {output}.merge.bed > {output}.target.bed
+# merge bed (bedtools shuffle -incl option file)
+total_l=`cat {bait_file} | wc -l`
+header_l=`grep ^@ {bait_file} | wc -l`
+data_l=`expr $total_l - $header_l`
+tail -$data_l {bait_file} > {output}.noheader.bed
+{BEDTOOLS} sort -i {output}.noheader.bed > {output}.sort.bed
+{BEDTOOLS} merge -i {output}.sort.bed > {output}.merge.bed
 
-    # depth
-    {SAMTOOLS} view {samtools_params} -b -h {input} | {SAMTOOLS} depth -b {output}.target.bed - > {output}.tmp
+if [ "{grc_flag}" = "True" ];
+then
+    cut -c 4- {output}.merge.bed > {output}.target.bed
+else
+    cp {output}.merge.bed {output}.target.bed
+fi
+
+# depth
+{SAMTOOLS} view {samtools_params} -b -h {input} | {SAMTOOLS} depth -b {output}.target.bed - > {output}.tmp
 
 mv {output}.tmp {output}
 """
@@ -264,6 +276,7 @@ mv {output}.tmp {output}
                             BEDTOOLS = args.bedtools,
                             SAMTOOLS = args.samtools,
                             samtools_params = args.samtools_params,
+                            grc_flag = args.grc_flag,
                             )
 
     subprocess.check_call(cmd, shell=True)
