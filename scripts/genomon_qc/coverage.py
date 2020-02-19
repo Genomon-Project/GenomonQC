@@ -63,10 +63,13 @@ def create_incl_bed_wgs(input_genome, output_bed, width, suffix, grc_flag):
 #
 # create -i BED, for bedtools shuffle
 #
-def create_i_bed_wgs(output_bed, line_num, width):
+def create_i_bed_wgs(output_bed, line_num, width, grc_flag):
     f = open(output_bed, "w")
+    prefix = "chr"
+    if grc_flag:
+        prefix = ""
     for i in range(line_num):
-        f.write("1\t0\t%d\n" % (width))
+        f.write("%s1\t0\t%d\n" % (prefix, width))
 
     f.close()
     
@@ -81,7 +84,11 @@ def calc_coverage(depth_file, bed_file, coverage_depth, output):
     if not os.path.exists(bed_file):
         print ("Not exist file, " + bed_file)
         return
-        
+    
+    if os.path.getsize(depth_file) == 0:
+        print ("Empty file, " + depth_file)
+        return
+    
     bed = pandas.read_csv(bed_file, header = None, sep='\t', usecols = [1,2])
     all_count = sum(bed[2] - bed[1])
 
@@ -182,6 +189,7 @@ if [ -e {output}.tmp ]; then
     rm {output}.tmp
 fi
 
+set +x
 cat {output}.target.bed | while read line; do (
     set -- $line
     start=$(($2+1))
@@ -191,12 +199,13 @@ cat {output}.target.bed | while read line; do (
     {SAMTOOLS} depth -r $1:$start-$3 {output}.tmp.bam >> {output}.tmp
 
 ) </dev/null; done
+set -x
 
 mv {output}.tmp {output}
 """
     output_prefix = os.path.dirname(args.output_file)
     create_incl_bed_wgs(args.genome_size_file, output_prefix + '/depth.shuffle_incl.bed', args.incl_bed_width, "", args.grc_flag)
-    create_i_bed_wgs(output_prefix + '/depth.shuffle_i.bed', args.i_bed_lines, args.i_bed_width)
+    create_i_bed_wgs(output_prefix + '/depth.shuffle_i.bed', args.i_bed_lines, args.i_bed_width, args.grc_flag)
     cmd = cmd_template.format(input = args.input_file,
                             output = output_prefix + '/depth',
                             gaptxt = args.gaptxt,
